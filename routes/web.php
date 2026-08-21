@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AuthController, AuditLogController, BranchController, CategoryController, DashboardController, InventoryMovementController, LicenseController, ProductController, ReportController, TransferController, UserController};
 
-Route::get('/', fn () => auth()->check() ? redirect()->route('dashboard') : app(\App\Http\Controllers\AuthController::class)->create());
+Route::get('/', fn() => auth()->check() ? redirect()->route('dashboard') : app(\App\Http\Controllers\AuthController::class)->create());
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
     Route::post('/login', [AuthController::class, 'store'])->name('login.store');
@@ -17,7 +17,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware('role:administrador')->group(function () {
         Route::resource('categories', CategoryController::class)->except('show');
         Route::resource('branches', BranchController::class)->except('show');
-    Route::resource('products', ProductController::class)->except('show');
+        Route::resource('products', ProductController::class)->except('show');
     });
     Route::resource('movements', InventoryMovementController::class)->only(['index', 'create', 'store']);
     Route::resource('transfers', TransferController::class)->only(['index', 'create', 'store']);
