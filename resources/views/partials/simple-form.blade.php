@@ -1,0 +1,2 @@
+@extends('layouts.app', ['title' => $title, 'heading' => $title])
+@section('content') @include('partials.flash')<div class="panel p-4" style="max-width: 760px"><form method="POST" action="{{ $action }}">@csrf @if($method ?? false) @method($method) @endif @yield('form-fields')<div class="mt-4"><button class="btn btn-dark">Guardar</button><a class="btn btn-light" href="{{ $back }}">Cancelar</a></div></form></div>@endsection

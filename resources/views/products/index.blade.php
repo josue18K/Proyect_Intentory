@@ -1,0 +1,7 @@
+@php($title = 'Productos')
+@php($createUrl = route('products.create'))
+@php($columns = ['Código', 'Producto', 'Categoría', 'Precio venta', 'Estado'])
+@php($values = fn($item) => [e($item->internal_code), '<strong>'.e($item->name).'</strong><br><a class="small" href="'.route('products.history',$item).'">Ver historial</a>', e($item->category->name), '$ '.number_format($item->sale_price, 2), $item->is_active ? '<span class="badge badge-normal">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>'])
+@php($editUrl = fn($item) => route('products.edit', $item))
+@php($deleteUrl = fn($item) => route('products.destroy', $item))
+@include('partials.crud-index')

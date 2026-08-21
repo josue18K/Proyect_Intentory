@@ -1,0 +1,25 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+    --liuvas-black: #111111;
+    --liuvas-yellow: #f5c400;
+    --liuvas-cream: #f7f7f4;
+    --liuvas-muted: #737373;
+}
+
+body { background: var(--liuvas-cream); color: var(--liuvas-black); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.sidebar { background: var(--liuvas-black); min-height: 100vh; width: 260px; }
+.brand-mark { color: var(--liuvas-yellow); letter-spacing: .08em; }
+.sidebar .nav-link { color: #a8a8a8; border-radius: .65rem; padding: .7rem .85rem; }
+.sidebar .nav-link:hover, .sidebar .nav-link.active { color: var(--liuvas-black); background: var(--liuvas-yellow); }
+.content { min-width: 0; }
+.stat-card, .panel { background: #fff; border: 1px solid #e8e8e3; border-radius: 1rem; }
+.stat-label { color: var(--liuvas-muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+.stat-value { font-size: 1.85rem; font-weight: 700; }
+.icon-box { align-items: center; background: #fff8cc; border-radius: .75rem; color: #8b7000; display: flex; height: 2.75rem; justify-content: center; width: 2.75rem; }
+.table > :not(caption) > * > * { padding: 1rem .75rem; }
+.badge-normal { background: #e6f7ed; color: #147a3d; }
+.badge-low { background: #fff2d9; color: #9a6100; }
+.badge-empty { background: #fde4e4; color: #b42318; }
+@media (max-width: 991.98px) { .sidebar { min-height: auto; width: 100%; } .sidebar .nav { flex-direction: row; overflow-x: auto; flex-wrap: nowrap; } .sidebar .nav-link { white-space: nowrap; } }
+@media print { .sidebar, header, form, .btn, nav { display: none !important; } .content { width: 100%; } .panel { border: 0; } }

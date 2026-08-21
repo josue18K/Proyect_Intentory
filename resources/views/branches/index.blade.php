@@ -1,0 +1,7 @@
+@php($title = 'Sedes')
+@php($createUrl = route('branches.create'))
+@php($columns = ['Nombre', 'Slug', 'Productos con stock', 'Estado'])
+@php($values = fn($item) => [e($item->name), e($item->slug), $item->inventories_count, $item->is_active ? '<span class="badge badge-normal">Activa</span>' : '<span class="badge bg-secondary">Inactiva</span>'])
+@php($editUrl = fn($item) => route('branches.edit', $item))
+@php($deleteUrl = fn($item) => route('branches.destroy', $item))
+@include('partials.crud-index')
