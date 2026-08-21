@@ -1,42 +1,17 @@
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Dashboard' }} | {{ config('app.name') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body>
-<div class="d-lg-flex min-vh-100">
-    <aside class="sidebar p-3">
-        <div class="d-flex align-items-center gap-2 mb-4 px-2">
-            <div class="bg-warning rounded-2 px-2 py-1 fw-bold">L</div>
-            <div><div class="brand-mark fw-bold small">LIUVA</div><div class="text-white-50 small">Inventario</div></div>
-        </div>
-        <div class="small text-uppercase text-white-50 px-2 mb-2">Principal</div>
-        <nav class="nav nav-pills flex-column gap-1">
-            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">▦ &nbsp; Dashboard</a>
-            <a class="nav-link" href="{{ route('products.index') }}">□ &nbsp; Productos</a>
-            <a class="nav-link" href="{{ route('movements.index') }}">↕ &nbsp; Movimientos</a>
-            <a class="nav-link {{ request()->routeIs('transfers.*') ? 'active' : '' }}" href="{{ route('transfers.index') }}">⇄ &nbsp; Transferencias</a>
-        </nav>
-        <div class="small text-uppercase text-white-50 px-2 mt-4 mb-2">Administración</div>
-        <nav class="nav nav-pills flex-column gap-1">
-            <a class="nav-link" href="{{ route('categories.index') }}">◉ &nbsp; Categorías</a>
-            <a class="nav-link" href="{{ route('branches.index') }}">⌂ &nbsp; Sedes</a>
-            @if(auth()->user()->role === 'administrador')<a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">♙ &nbsp; Usuarios</a><a class="nav-link {{ request()->routeIs('licenses.*') ? 'active' : '' }}" href="{{ route('licenses.index') }}">▣ &nbsp; Licencias</a><a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}">⌕ &nbsp; Auditoría</a>@endif
-            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}">▣ &nbsp; Reportes</a>
-            <a class="nav-link" href="#">⚙ &nbsp; Configuración</a>
-        </nav>
-        <div class="border-top border-secondary mt-5 pt-3 px-2 text-white-50 small">Tienda Importaciones<br>Control inteligente de stock</div>
-    </aside>
-    <main class="content flex-grow-1">
-        <header class="bg-white border-bottom px-3 px-lg-4 py-3 d-flex justify-content-between align-items-center">
-            <div><div class="text-muted small">{{ now()->isoFormat('dddd, D [de] MMMM') }}</div><h1 class="h4 mb-0 fw-bold">{{ $heading ?? 'Resumen general' }}</h1></div>
-            <div class="d-flex align-items-center gap-3"><div class="text-end"><div class="fw-semibold small">{{ auth()->user()->name }}</div><div class="text-muted small">{{ ucfirst(auth()->user()->role) }}</div></div><div class="rounded-circle bg-dark text-warning fw-bold p-2">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</div><form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-sm btn-outline-dark">Salir</button></form></div>
-        </header>
-        <div class="p-3 p-lg-4">@include('partials.form-errors') @yield('content')</div>
-    </main>
-</div>
-</body>
-</html>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#11110f"><title>{{ $title ?? 'Dashboard' }} | {{ config('app.name') }}</title>@vite(['resources/css/app.css','resources/js/app.js'])</head>
+<body class="app-body"><div class="page-loader" aria-hidden="true"><span></span></div><div class="app-shell">
+<aside class="sidebar" id="appSidebar"><div class="sidebar-head"><a class="brand" href="{{ route('dashboard') }}"><span class="brand-symbol">L</span><span><strong>LIUVA</strong><small>Inventory OS</small></span></a><button class="icon-button sidebar-close d-lg-none" type="button" data-sidebar-close aria-label="Cerrar menú"><i data-lucide="x"></i></button></div>
+<div class="sidebar-label">Operaciones</div><nav class="sidebar-nav">
+<a class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+<a class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}"><i data-lucide="package"></i><span>Productos</span></a>
+<a class="nav-item {{ request()->routeIs('movements.*') ? 'active' : '' }}" href="{{ route('movements.index') }}"><i data-lucide="arrow-down-up"></i><span>Movimientos</span></a>
+<a class="nav-item {{ request()->routeIs('transfers.*') ? 'active' : '' }}" href="{{ route('transfers.index') }}"><i data-lucide="repeat-2"></i><span>Transferencias</span></a></nav>
+<div class="sidebar-label">Gestión</div><nav class="sidebar-nav">
+<a class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}"><i data-lucide="shapes"></i><span>Categorías</span></a>
+<a class="nav-item {{ request()->routeIs('branches.*') ? 'active' : '' }}" href="{{ route('branches.index') }}"><i data-lucide="building-2"></i><span>Sedes</span></a>
+@if(auth()->user()->role === 'administrador')<a class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}"><i data-lucide="users"></i><span>Usuarios</span></a><a class="nav-item {{ request()->routeIs('licenses.*') ? 'active' : '' }}" href="{{ route('licenses.index') }}"><i data-lucide="key-round"></i><span>Licencias</span></a><a class="nav-item {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="{{ route('audit.index') }}"><i data-lucide="scan-search"></i><span>Auditoría</span></a>@endif
+<a class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}"><i data-lucide="chart-no-axes-combined"></i><span>Reportes</span></a></nav>
+<div class="sidebar-footer"><span class="status-dot"></span><div><strong>Sistema operativo</strong><small>Control de stock en tiempo real</small></div></div></aside>
+<button class="sidebar-backdrop" data-sidebar-close aria-label="Cerrar navegación"></button>
+<main class="main-content"><header class="topbar"><div class="topbar-title"><button class="icon-button d-lg-none" type="button" data-sidebar-open aria-label="Abrir menú"><i data-lucide="menu"></i></button><div><span>{{ now()->isoFormat('dddd, D [de] MMMM') }}</span><h1>{{ $heading ?? 'Resumen general' }}</h1></div></div><div class="user-area"><button class="icon-button d-none d-sm-grid" type="button" aria-label="Notificaciones"><i data-lucide="bell"></i><span class="notification-dot"></span></button><div class="user-copy d-none d-sm-block"><strong>{{ auth()->user()->name }}</strong><span>{{ ucfirst(auth()->user()->role) }}</span></div><div class="avatar">{{ strtoupper(substr(auth()->user()->name,0,2)) }}</div><form method="POST" action="{{ route('logout') }}">@csrf<button class="icon-button" title="Cerrar sesión" aria-label="Cerrar sesión"><i data-lucide="log-out"></i></button></form></div></header>
+<div class="page-content">@include('partials.form-errors')<div class="page-enter">@yield('content')</div></div></main></div></body></html>
