@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
         $categories = collect();
         $branches = collect(['TIENDA IMPORTACIONES LIUVA - PAUZA', 'TIENDA IMPORTACIONES LIUVA MUJER'])
             ->mapWithKeys(fn ($name) => [$name => Branch::create(['name' => $name, 'slug' => str($name)->slug()])]);
+        $mujerCategories = collect(['Cuidado de la piel', 'Cosméticos', 'Herramientas de aseo personal', 'Arreglo estético', 'Bisutería', 'Dulces', 'Prendas de vestir', 'Menaje', 'Artículos personales', 'Otros']);
+        $pauza = $branches['TIENDA IMPORTACIONES LIUVA - PAUZA'];
+        $mujer = $branches['TIENDA IMPORTACIONES LIUVA MUJER'];
 
         // Catalog format: category|name|sale price|initial stock at Pauza.
         $catalog = <<<'CATALOG'
@@ -221,12 +224,11 @@ CATALOG;
                 'sale_price' => (float) $salePrice,
                 'minimum_stock' => $initialStock > 0 ? max(3, (int) ceil($initialStock * .15)) : 3,
             ]);
-            foreach ($branches as $branch) {
-                $quantity = $branch->name === 'TIENDA IMPORTACIONES LIUVA - PAUZA' ? (int) $initialStock : 0;
-                Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => $quantity]);
-                if ($quantity > 0) {
-                    InventoryMovement::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'user_id' => $admin->id, 'type' => 'entrada', 'quantity' => $quantity, 'stock_before' => 0, 'stock_after' => $quantity, 'reason' => 'Carga inicial del catálogo']);
-                }
+            $branch = $mujerCategories->contains($categoryName) ? $mujer : $pauza;
+            $quantity = (int) $initialStock;
+            Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => $quantity]);
+            if ($quantity > 0) {
+                InventoryMovement::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'user_id' => $admin->id, 'type' => 'entrada', 'quantity' => $quantity, 'stock_before' => 0, 'stock_after' => $quantity, 'reason' => 'Carga inicial del catálogo']);
             }
         }
 
@@ -475,7 +477,8 @@ CATALOG;
             [$categoryName, $name, $salePrice] = explode('|', $line);
             $category = $categories[$categoryName] ??= Category::create(['name' => $categoryName, 'slug' => str($categoryName)->slug()]);
             $product = Product::create(['category_id' => $category->id, 'internal_code' => 'LIU-' . str_pad((string) (++$code), 4, '0', STR_PAD_LEFT), 'name' => $name, 'purchase_price' => 0, 'sale_price' => (float) $salePrice, 'minimum_stock' => 3]);
-            foreach ($branches as $branch) Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 0]);
+            $branch = $mujerCategories->contains($categoryName) ? $mujer : $pauza;
+            Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 0]);
         }
     }
 }
