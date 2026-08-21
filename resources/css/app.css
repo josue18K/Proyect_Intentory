@@ -16,3 +16,16 @@
 
 /* Pagination guard: Bootstrap markup and bounded navigation icons. */
 .pagination{align-items:center;flex-wrap:wrap;gap:4px;margin:18px 0 0}.pagination .page-link{align-items:center;display:flex;font-size:.72rem;height:34px;justify-content:center;min-width:34px;padding:.35rem .6rem}.pagination svg,.pagination .page-link svg,nav[role="navigation"] svg{display:block;height:14px!important;max-height:14px!important;max-width:14px!important;width:14px!important}.pagination .page-item.disabled .page-link{background:transparent;color:#aaa}nav[role="navigation"] p{color:var(--muted);font-size:.7rem;margin:18px 0 0}
+.print-report { display: none; }
+@media print {
+    .sidebar, .topbar, form, .btn, nav, .report-screen, .alert { display: none !important; }
+    .main-content { margin: 0; width: 100%; }
+    .page-content { padding: 0; }
+    .print-report { display: block !important; padding: 0 18px; }
+    .print-report h1 { font-size: 22px; margin: 0 0 4px; text-transform: uppercase; }
+    .print-report p { color: #555; font-size: 12px; margin: 0 0 18px; }
+    .print-report table { border-collapse: collapse; width: 100%; font-size: 11px; }
+    .print-report th, .print-report td { border: 1px solid #222; padding: 7px; text-align: left; }
+    .print-report th:nth-child(2), .print-report td:nth-child(2) { text-align: center; width: 100px; }
+    .print-report th:nth-child(3), .print-report td:nth-child(3) { text-align: right; width: 120px; }
+}
