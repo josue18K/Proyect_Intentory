@@ -51,6 +51,8 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
             $table->foreignId('branch_id')->constrained()->restrictOnDelete();
             $table->unsignedInteger('quantity')->default(0);
+            $table->timestamp('last_entry_at')->nullable();
+            $table->timestamp('exhausted_at')->nullable();
             $table->timestamps();
             $table->unique(['product_id', 'branch_id']);
         });
@@ -64,6 +66,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->unsignedInteger('stock_before');
             $table->unsignedInteger('stock_after');
+            $table->timestamp('movement_date')->nullable();
             $table->string('reason')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();

@@ -41,13 +41,13 @@ class InventoryAuthorizationTest extends TestCase
 
         $this->post(route('movements.store'), [
             'product_id' => $product->id, 'branch_id' => $branch->id,
-            'type' => 'entrada', 'quantity' => 10,
+            'type' => 'entrada', 'quantity' => 10, 'movement_date' => now()->toDateString(),
         ])->assertRedirect(route('movements.index'));
         $this->assertDatabaseHas('inventories', ['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 10]);
 
         $this->post(route('movements.store'), [
             'product_id' => $product->id, 'branch_id' => $branch->id,
-            'type' => 'salida', 'quantity' => 11,
+            'type' => 'salida', 'quantity' => 11, 'movement_date' => now()->toDateString(),
         ])->assertStatus(422);
         $this->assertDatabaseHas('inventories', ['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 10]);
     }
@@ -59,7 +59,7 @@ class InventoryAuthorizationTest extends TestCase
 
         $this->actingAs($user)->post(route('movements.store'), [
             'product_id' => $product->id, 'branch_id' => $otherBranch->id,
-            'type' => 'entrada', 'quantity' => 1,
+            'type' => 'entrada', 'quantity' => 1, 'movement_date' => now()->toDateString(),
         ])->assertForbidden();
     }
 
