@@ -229,5 +229,253 @@ CATALOG;
                 }
             }
         }
+
+        $additionalCatalog = <<<'CATALOG'
+Cuidado de la piel|COLONIA + CREMA CORPORAL 250ML|17.99
+Cuidado de la piel|CREMA HIDRATANTE WOKALI|17.90
+Cuidado de la piel|EXFOLIANTE DE LABIOS|14.90
+Cuidado de la piel|EXFOLIANTE GEL WOKALI|9.90
+Cuidado de la piel|KIT LIMPIADOR FACIAL MADISON|24.90
+Cuidado de la piel|LIMPIADOR FACIAL FACEWASH DR RASHEL|14.90
+Cuidado de la piel|MASCARILLA FACIAL WOKALI|2.99
+Cuidado de la piel|PARCHE DE OJOS|16.90
+Cuidado de la piel|PROTECTOR SOLAR ESTELIN|19.90
+Cuidado de la piel|SUERO DE LECHE DE BURRA|14.90
+Cosméticos|AGB90 POLVO COMPACTO Y SUELTO|13.90
+Cosméticos|AGC100B CORRECTOR|6.99
+Cosméticos|AGC40 CONTORNO LÍQUIDO|5.49
+Cosméticos|AGD170 DELINEADOR PUNTA|4.99
+Cosméticos|AGF300 PRIMER BASE|8.49
+Cosméticos|AGF400 SPRAY SELLADOR|8.49
+Cosméticos|AGI140 ILUMINADOR|5.99
+Cosméticos|AGL460 LABIAL KISS|3.49
+Cosméticos|AGL560 LABIAL LATINA|3.99
+Cosméticos|AGL650 SUBLIME|6.99
+Cosméticos|AGL690 LIP GLOSS|6.99
+Cosméticos|AGL700 AZUCENA|6.99
+Cosméticos|AGP102 POLVO COMPACTO|7.49
+Cosméticos|AGP160 POLVOS SUELTOS|8.49
+Cosméticos|AGR107 HECHIZADA RIMEL|5.49
+Cosméticos|AGR150 RIMEL CON COLÁGENO|4.49
+Cosméticos|AGS132 SOMBRAS TERRA|6.99
+Cosméticos|AGS140 PALETA DE SOMBRAS|7.49
+Cosméticos|AGS800 SOMBRA INTI|14.90
+Cosméticos|AGT120 TINTE LABIOS|2.99
+Cosméticos|AGZ10 LÁPIZ PARA CEJAS|5.49
+Cosméticos|COLONIA 175ML CAJA TUNIES|12.90
+Cosméticos|COLONIA BABY MIST 200ML TUNIES|11.90
+Cosméticos|COLONIA BODY MIST 175ML TUNIES|11.90
+Cosméticos|ESPONJA EXFOLIANTE|1.99
+Cosméticos|ESPONJA PARA MAQUILLAJE|1.49
+Cosméticos|M2036 LABIAL LÍQUIDO MANSLY|8.49
+Cosméticos|M2056 LABIAL LÍQUIDO MANSLY|6.99
+Cosméticos|M2058 LIP GLOSS MANSLY|8.99
+Cosméticos|PACK 3PZ ESPONJA MAQUILLAJE|2.49
+Cosméticos|PERFUME BAHLI HOMBRE|14.90
+Cosméticos|PERFUME BAHLI MUJER|14.90
+Cosméticos|PERFUME ZAFIRO 50ML|18.90
+Cosméticos|PERFUME VELVET 50ML|18.90
+Cosméticos|PERFUME SANRIO DISEÑOS 30ML|14.90
+Cosméticos|PERFUME DISNEY 50ML|24.90
+Cosméticos|PERFUME HELLO KITTY CON BASE 50ML|20.90
+Cosméticos|PERFUME BARBIE/UNICORN 50ML|25.90
+Cosméticos|PERFUME ROSE&LILN TUBO 35ML|4.99
+Cosméticos|TF623 RUBOR LÍQUIDO|4.99
+Cosméticos|TS644 BASE TIESIEE|6.99
+Cosméticos|TS855 LABIAL BRILLO|4.99
+Cosméticos|TS864 ONLY YOU TREESIE|7.49
+Cosméticos|TS915 LIP OIL|3.99
+Herramientas de aseo personal|AFEITADORAS DE CEJAS 3PZS|2.49
+Herramientas de aseo personal|CORTA UÑA 3PZS|2.99
+Herramientas de aseo personal|LIMA DE UÑAS|1.49
+Herramientas de aseo personal|PINZAS PARA CEJAS 2PZ|1.99
+Herramientas de aseo personal|REMOVEDOR DE ESPINILLAS Y PUNTOS NEGROS|1.99
+Herramientas de aseo personal|RIZADOR DE METAL|2.99
+Herramientas de aseo personal|RIZADOR PREMIUM|3.49
+Herramientas de aseo personal|TIJERAS PARA CEJAS CURVADAS|1.99
+Aseo personal|BYWIN PACK X2 BEBE|16.90
+Aseo personal|CARTUCHERA CEPILLO PASTA TUNIES|7.99
+Aseo personal|DESENREDANTE 300ML TUNIES|11.90
+Aseo personal|DESMAQUILLANTE KITTY|4.99
+Aseo personal|DESODORANTE SKY HOMBRE|7.99
+Aseo personal|DESODORANTE SKY MUJER|7.99
+Aseo personal|ELA DIARIO|2.49
+Aseo personal|ELA NOCTURNA|4.99
+Aseo personal|ELA NORMAL|3.49
+Aseo personal|ELA ULTRA DELGADA|3.49
+Aseo personal|ESPONJA DE DUCHA|2.99
+Aseo personal|GEL DE CABELLO 1KG|14.90
+Aseo personal|HISOPO KITTY 400PZ|6.99
+Aseo personal|JABÓN LÍQUIDO 250ML TUNIES|8.99
+Aseo personal|KIT PERFUMER RELOJ VARON|29.99
+Aseo personal|PAÑITO 25PZ|1.49
+Aseo personal|SHAMPOO 2EN1 FROZEN 236 ML TUNIES|8.99
+Aseo personal|SHAMPOO CANAS EN CAJA|14.99
+Aseo personal|SHAMPOO KITTY 300ML 3EN1|10.90
+Aseo personal|SHAMPOO MARVEL 350ML 3EN1 E 1 TUNIES|15.90
+Aseo personal|TALCO 100GR TUNIES|4.99
+Aseo personal|TALCO 750GR TUNIES|12.90
+Aseo personal|TOALLA CABELLO|3.49
+Aseo personal|TOALLITAS HUMEDAS 8PACKS TUNIES|4.99
+Aseo personal|ELA NORMAL ECONOPACK 42PZ|12.99
+Aseo personal|ELA NOCTURNA ECONOPACK 30PZ|12.99
+Aseo personal|ELA DIARIO ECONOPACK 150PZ|14.99
+Aseo personal|ELA PROTECTOR LACTANCIA 40PZ|15.90
+Aseo personal|TOALLITAS TUNIES 25PZ|1.99
+Aseo personal|TOALLITAS TUNIES 100PZ|4.49
+Aseo personal|TOALLITAS TUNIES BEBE 200PZ|7.99
+Arreglo estético|BUFANDA LAZO DISEÑO|7.99
+Arreglo estético|MECHAS COLORES|2.99
+Arreglo estético|PAÑOLETA DISEÑO|3.99
+Arreglo estético|PESTAÑAS 5D|4.99
+Arreglo estético|UÑAS EAS CAT|6.99
+Bisutería|ARETES COLOR DISEÑOS|3.99
+Bisutería|ARETES METAL PIEDRAS|4.49
+Bisutería|CAJITAS COLETS|4.49
+Bisutería|CAPIBARA IMANTADO|2.49
+Bisutería|CEPILLO CON ESPEJO|2.99
+Bisutería|CEPILLO DE CABELLO ECO|3.99
+Bisutería|CEPILLO DE CABELLO PREMIUM|4.49
+Bisutería|COLET NEGRO 6PZ|1.49
+Bisutería|COLETS X3|2.49
+Bisutería|COLETS X4|3.49
+Bisutería|COLLAR PENDIENTES|9.90
+Bisutería|GANCHITO MUJER 2PZ|3.99
+Bisutería|GANCHITOS OJON|1.49
+Bisutería|GANCHO COLET 5 PZ|6.49
+Bisutería|GANCHO DE METAL|1.49
+Bisutería|GANCHO PICO MARIPOSA|1.49
+Bisutería|GANCHOS COLETS 4 PZ CUADRADO|5.49
+Bisutería|GANCHOS COLETS 4 PZ FLOR|5.49
+Bisutería|GANCHOS VARIOS|1.99
+Bisutería|HORQUILLAS PARA CABELLO 20PZS|1.49
+Bisutería|LIGAS EN TUBO|1.49
+Bisutería|LLAVERO LA BUBU|3.49
+Bisutería|LLAVERO OSITO NEGRO|1.49
+Bisutería|LLAVEROS SURTIDOS|1.49
+Bisutería|MINI COLETS 50PZ|2.99
+Bisutería|MINI SET NIÑA DISEÑOS|7.49
+Bisutería|PALITO CHINO DISEÑO|7.90
+Bisutería|PEINE DE CABELLO|1.99
+Bisutería|PICO PATO 2 PZ FLOR|4.99
+Bisutería|PICO PATO 2 PZ MOÑO|4.49
+Bisutería|PILIMINI 3PZ|2.49
+Bisutería|PULCERA ACERO|10.90
+Bisutería|SET GANCHITOS 12PZ|2.49
+Bisutería|VINCHA COLET 2 PZ|4.99
+Bisutería|VINCHA DE TELA|2.99
+Bisutería|VINCHA MAQUILLAJE 4 PZ|8.99
+Bisutería|VINCHA PLASTICA|2.49
+Prendas de vestir|MEDIA CARNERO MUJER|5.99
+Prendas de vestir|PANTI NIÑA|12.90
+Prendas de vestir|MEDIA DE NIÑO ALGODÓN|3.49
+Prendas de vestir|MEDIA TOBILLERA ALGODÓN|3.99
+Prendas de vestir|MEDIA TALONERA ALGODÓN|2.99
+Prendas de vestir|MEDIAS PARA DORMIR 2 A 4|2.49
+Prendas de vestir|MEDIAS PARA DORMIR 4 A 6|2.49
+Prendas de vestir|MEDIAS PARA DORMIR 6 A 8|2.49
+Prendas de vestir|MEDIAS PARA DORMIR ADULTO|3.99
+Prendas de vestir|INTERIOR 505549|4.99
+Prendas de vestir|INTERIOR WS1202|6.99
+Prendas de vestir|INTERIOR 505233|4.99
+Prendas de vestir|INTERIOR DH2110|7.99
+Prendas de vestir|INTERIOR 8458|8.49
+Prendas de vestir|INTERIOR R187|8.49
+Prendas de vestir|INTERIOR DK670|6.99
+Prendas de vestir|INTERIOR 6048|7.99
+Prendas de vestir|INTERIOR HB904|7.99
+Prendas de vestir|INTERIOR Q8300|9.90
+Prendas de vestir|INTERIOR D28101|8.99
+Prendas de vestir|INTERIOR HB3811|7.49
+Prendas de vestir|INTERIOR ST2402|6.99
+Prendas de vestir|INTERIOR Q8510|9.90
+Prendas de vestir|INTERIOR 8290|9.90
+Prendas de vestir|INTERIOR DH1965|6.49
+Prendas de vestir|INTERIOR X2968|6.49
+Prendas de vestir|INTERIOR DH1677|6.99
+Prendas de vestir|INTERIOR 6005|6.49
+Prendas de vestir|INTERIOR 240126|7.99
+Prendas de vestir|INTERIOR DH1192|6.99
+Prendas de vestir|INTERIOR CYB704|8.99
+Prendas de vestir|INTERIOR 66026|10.90
+Prendas de vestir|INTERIOR V2148|9.90
+Prendas de vestir|INTERIOR H6004|7.99
+Prendas de vestir|2095 BLUZA|19.90
+Prendas de vestir|FAJA WF5895|13.90
+Prendas de vestir|FAJA 0087|15.90
+Prendas de vestir|BOXER 6723|9.90
+Prendas de vestir|BOXER X5665|9.90
+Prendas de vestir|BOXER ZL51250|7.49
+Prendas de vestir|BOXER B017|9.90
+Prendas de vestir|SOSTEN BX43536|14.90
+Prendas de vestir|SOSTEN 1009|14.49
+Prendas de vestir|SOSTEN 33071|10.90
+Prendas de vestir|SOSTEN ZB664|11.90
+Prendas de vestir|SOSTEN XFS33|14.90
+Prendas de vestir|SOSTEN XFS27|12.90
+Prendas de vestir|SOSTEN XFS38|12.90
+Prendas de vestir|SOSTEN 92531|13.99
+Prendas de vestir|SOSTEN XFS22|12.90
+Prendas de vestir|SOSTEN XFS29|14.90
+Prendas de vestir|SOSTEN WJ2310|13.99
+Prendas de vestir|SOSTEN XFS41|15.90
+Prendas de vestir|SOSTEN XFS18|15.90
+Prendas de vestir|SOSTEN 999|15.90
+Prendas de vestir|SOSTEN 8803|13.99
+Prendas de vestir|SOSTEN XFS48|13.49
+Prendas de vestir|SOSTEN XFS54|13.99
+Prendas de vestir|SOSTEN 2012|8.99
+Prendas de vestir|SOSTEN 988|14.90
+Prendas de vestir|TOP 8723|19.90
+Prendas de vestir|TOP 001|12.90
+Prendas de vestir|TOP 719|12.90
+Prendas de vestir|CHULLOS VARIOS|3.99
+Prendas de vestir|PIJAMA NIÑOS|24.90
+Prendas de vestir|PIJAMA MUJER|31.90
+Prendas de vestir|CASACA UNISEX CORTAVIENTO|29.90
+Prendas de vestir|CASACA NIÑO 6666|69.90
+Prendas de vestir|CASACA DAMA X012|59.90
+Menaje|AGENDA IMANTADA DE LICENCIA|14.90
+Menaje|ALCANCIA STICH DE #1|3.99
+Menaje|ALCANCIA STICH DE #2|4.99
+Menaje|ALCANCIA STICH DE #3|5.99
+Menaje|ALCANCIA STICH DE #4|6.99
+Menaje|ALCANCIA STICH DE #5|7.99
+Menaje|CONDIMENTERO DE LICENCIA|8.99
+Menaje|CORTINA DUCHA DE LICENCIA|7.90
+Menaje|ESFERA LED|6.99
+Menaje|HELADERA KWAI|15.99
+Menaje|INDIVIDUALES DE MESA DE LICENCIA|1.49
+Menaje|JOYERO 3 NIVELES PVC|5.49
+Menaje|JOYERO DE ACRILICO|7.99
+Menaje|JOYERO DE GAMUZA|11.90
+Menaje|MANTAS IMPORTADAS|34.90
+Menaje|MANTAS LUMINOSAS DE LICENCIA|14.90
+Menaje|MESA PORTATIL CAMA DE LICENCIA|17.90
+Menaje|NECESER CIRCULAR DOMO|10.90
+Menaje|RELOJ DE PARED DE LICENCIA|11.90
+Menaje|SILLA PLEGABLE DE LICENCIA|14.90
+Menaje|TACHO DE LICENCIA|12.90
+Menaje|TAZA CALENTADORA|14.90
+Menaje|TAZAS ANCHAS DE LICENCIA|7.99
+Menaje|TOMATODO COHETE DE LICENCIA|8.99
+Artículos personales|BOLSO MARRON GRANDE|16.90
+Artículos personales|CARTERA COLORES|15.90
+Artículos personales|CARTERA FASHION BAG|24.90
+Artículos personales|CARTERA MIN MIN|17.49
+Artículos personales|MOCHILA LOVE|11.90
+Otros|BOLSA REGALO M|1.99
+Otros|BOLSA REGALO MZ|2.99
+Otros|BOLSA REGALO L|3.49
+Otros|BOLSA REGALO XL|3.99
+CATALOG;
+
+        $code = Product::count();
+        foreach (explode("\n", trim($additionalCatalog)) as $line) {
+            [$categoryName, $name, $salePrice] = explode('|', $line);
+            $category = $categories[$categoryName] ??= Category::create(['name' => $categoryName, 'slug' => str($categoryName)->slug()]);
+            $product = Product::create(['category_id' => $category->id, 'internal_code' => 'LIU-' . str_pad((string) (++$code), 4, '0', STR_PAD_LEFT), 'name' => $name, 'purchase_price' => 0, 'sale_price' => (float) $salePrice, 'minimum_stock' => 3]);
+            foreach ($branches as $branch) Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 0]);
+        }
     }
 }
