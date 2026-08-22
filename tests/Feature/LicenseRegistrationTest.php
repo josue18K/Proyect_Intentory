@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\{License, User};
+use App\Models\{Branch, License, User};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,7 +13,8 @@ class LicenseRegistrationTest extends TestCase
     public function test_registration_activates_an_available_license(): void
     {
         $admin = User::factory()->create(['role' => 'administrador']);
-        $license = License::create(['code' => 'TEST-CODE-01', 'created_by' => $admin->id]);
+        $branch = Branch::create(['name' => 'Pauza', 'slug' => 'pauza']);
+        $license = License::create(['code' => 'TEST-CODE-01', 'created_by' => $admin->id, 'branch_id' => $branch->id]);
 
         $this->post(route('register.store'), [
             'name' => 'Nuevo vendedor', 'email' => 'vendedor@test.local',
@@ -23,6 +24,7 @@ class LicenseRegistrationTest extends TestCase
 
         $this->assertAuthenticatedAs(User::where('email', 'vendedor@test.local')->first());
         $this->assertDatabaseHas('licenses', ['id' => $license->id, 'status' => 'activated']);
+        $this->assertDatabaseHas('branch_user', ['user_id' => User::where('email', 'vendedor@test.local')->value('id'), 'branch_id' => $branch->id]);
     }
 
     public function test_registration_rejects_a_used_license(): void

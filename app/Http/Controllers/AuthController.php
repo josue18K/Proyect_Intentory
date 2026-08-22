@@ -17,8 +17,9 @@ class AuthController extends Controller
         $data = $request->validate(['name' => ['required', 'string', 'max:255'], 'email' => ['required', 'email', 'max:255', 'unique:users,email'], 'password' => ['required', 'confirmed', 'min:8'], 'license_code' => ['required', 'string']]);
         $user = DB::transaction(function () use ($data) {
             $license = License::whereRaw('upper(code) = ?', [strtoupper($data['license_code'])])->lockForUpdate()->first();
-            abort_unless($license && $license->isAvailable(), 422, 'El código de licencia no está disponible.');
+            abort_unless($license && $license->isAvailable() && $license->branch_id, 422, 'El código de licencia no está disponible o no tiene una sede asignada.');
             $user = User::create(['name' => $data['name'], 'email' => $data['email'], 'password' => $data['password'], 'role' => 'vendedor', 'permissions' => ['inventory.view', 'inventory.manage']]);
+            $user->branches()->sync([$license->branch_id]);
             $license->update(['status' => 'activated', 'activated_by' => $user->id, 'activated_at' => now()]);
             return $user;
         });
