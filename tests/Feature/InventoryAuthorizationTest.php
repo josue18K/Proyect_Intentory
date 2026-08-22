@@ -16,11 +16,19 @@ class InventoryAuthorizationTest extends TestCase
         $this->get('/movements/create')->assertRedirect(route('login'));
     }
 
-    public function test_vendor_cannot_manage_catalog(): void
+    public function test_vendor_can_view_catalog_but_cannot_manage_it(): void
     {
-        $this->actingAs(User::factory()->create(['role' => 'vendedor']))
+        $user = User::factory()->create(['role' => 'vendedor']);
+        $category = Category::create(['name' => 'Catálogo', 'slug' => 'catalogo']);
+        $product = Product::create(['category_id' => $category->id, 'internal_code' => 'CAT-001', 'name' => 'Producto visible', 'purchase_price' => 1, 'sale_price' => 2, 'minimum_stock' => 0]);
+        $branch = Branch::create(['name' => 'Sede vendedor', 'slug' => 'sede-vendedor']);
+        $user->branches()->attach($branch);
+        Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id]);
+
+        $this->actingAs($user)
             ->get(route('products.index'))
-            ->assertForbidden();
+            ->assertOk()
+            ->assertSee('Producto visible');
     }
 
     public function test_inactive_user_is_logged_out_on_next_request(): void
@@ -68,7 +76,7 @@ class InventoryAuthorizationTest extends TestCase
         [$user, $product, $origin] = $this->inventoryContext();
         $destination = Branch::create(['name' => 'Destino', 'slug' => 'destino']);
         $user->branches()->attach($destination);
-        Inventory::create(['product_id' => $product->id, 'branch_id' => $origin->id, 'quantity' => 8]);
+        Inventory::where(['product_id' => $product->id, 'branch_id' => $origin->id])->update(['quantity' => 8]);
         $this->actingAs($user);
         $payload = ['product_id' => $product->id, 'from_branch_id' => $origin->id, 'to_branch_id' => $destination->id, 'quantity' => 3];
 
@@ -89,6 +97,7 @@ class InventoryAuthorizationTest extends TestCase
         $product = Product::create(['category_id' => $category->id, 'internal_code' => 'GEN-001', 'name' => 'Producto', 'purchase_price' => 1, 'sale_price' => 2, 'minimum_stock' => 0]);
         $branch = Branch::create(['name' => 'Origen', 'slug' => 'origen']);
         $user->branches()->attach($branch);
+        Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 0]);
 
         return [$user, $product, $branch];
     }

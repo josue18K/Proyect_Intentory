@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 class TransferController extends Controller
 {
     public function index(Request $request) { abort_unless($request->user()->can('inventory.view'), 403); $allowed = $request->user()->role === 'administrador' ? null : $request->user()->branches()->pluck('branches.id'); $items = Transfer::with(['product','fromBranch','toBranch','user'])->when($allowed, fn($q) => $q->where(fn($q) => $q->whereIn('from_branch_id', $allowed)->orWhereIn('to_branch_id', $allowed)))->when($request->status, fn ($q, $v) => $q->where('status', $v))->latest()->paginate(15)->withQueryString(); return view('transfers.index', compact('items')); }
-    public function create(Request $request) { abort_unless($request->user()->can('inventory.manage'), 403); return view('transfers.form', ['products' => Product::where('is_active', true)->orderBy('name')->get(), 'branches' => Branch::where('is_active', true)->when($request->user()->role !== 'administrador', fn($q) => $q->whereIn('id', $request->user()->branches()->pluck('branches.id')))->orderBy('name')->get()]); }
+    public function create(Request $request) { abort_unless($request->user()->can('inventory.manage'), 403); $allowed = $request->user()->role === 'administrador' ? null : $request->user()->branches()->pluck('branches.id'); return view('transfers.form', ['products' => Product::where('is_active', true)->when($allowed, fn ($q) => $q->whereHas('inventories', fn ($i) => $i->whereIn('branch_id', $allowed)))->orderBy('name')->get(), 'branches' => Branch::where('is_active', true)->when($allowed, fn($q) => $q->whereIn('id', $allowed))->orderBy('name')->get()]); }
     public function store(Request $request)
     {
         abort_unless($request->user()->can('inventory.manage'), 403);

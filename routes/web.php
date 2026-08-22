@@ -17,7 +17,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware('role:administrador')->group(function () {
         Route::resource('categories', CategoryController::class)->except('show');
         Route::resource('branches', BranchController::class)->except('show');
-        Route::resource('products', ProductController::class)->except('show');
+        Route::resource('products', ProductController::class)->except(['show', 'index']);
     });
     Route::resource('movements', InventoryMovementController::class)->only(['index', 'create', 'store']);
     Route::resource('transfers', TransferController::class)->only(['index', 'create', 'store']);
@@ -33,5 +33,6 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/csv', [ReportController::class, 'csv'])->name('reports.csv');
+    Route::get('products', [ProductController::class, 'index'])->name('products.index');
     Route::get('products/{product}/history', [ProductController::class, 'history'])->name('products.history');
 });
