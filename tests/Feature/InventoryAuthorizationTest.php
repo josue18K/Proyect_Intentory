@@ -42,6 +42,19 @@ class InventoryAuthorizationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_admin_password_is_required_to_delete_a_user(): void
+    {
+        $admin = User::factory()->create(['role' => 'administrador']);
+        $target = User::factory()->create(['role' => 'vendedor']);
+        $this->actingAs($admin);
+
+        $this->delete(route('users.destroy', $target), ['password' => 'incorrecta'])->assertSessionHasErrors('password');
+        $this->assertDatabaseHas('users', ['id' => $target->id, 'is_active' => true]);
+
+        $this->delete(route('users.destroy', $target), ['password' => 'password'])->assertRedirect();
+        $this->assertDatabaseHas('users', ['id' => $target->id, 'is_active' => false]);
+    }
+
     public function test_entry_and_exit_update_stock_without_going_negative(): void
     {
         [$user, $product, $branch] = $this->inventoryContext();

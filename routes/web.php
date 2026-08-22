@@ -27,6 +27,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::get('licenses', [LicenseController::class, 'index'])->name('licenses.index');
         Route::post('licenses', [LicenseController::class, 'store'])->name('licenses.store');
         Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
