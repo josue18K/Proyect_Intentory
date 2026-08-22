@@ -52,7 +52,7 @@ class InventoryAuthorizationTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $target->id, 'is_active' => true]);
 
         $this->delete(route('users.destroy', $target), ['password' => 'password'])->assertRedirect();
-        $this->assertDatabaseHas('users', ['id' => $target->id, 'is_active' => false]);
+        $this->assertSoftDeleted('users', ['id' => $target->id]);
     }
 
     public function test_entry_and_exit_update_stock_without_going_negative(): void
