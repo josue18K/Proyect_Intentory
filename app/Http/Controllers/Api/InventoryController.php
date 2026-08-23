@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\{AuditLog, Branch, Inventory, InventoryMovement, Product};
+use App\Models\{AuditLog, Branch, Inventory, InventoryMovement, Product, Transfer, User, License};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -98,6 +98,57 @@ class InventoryController extends Controller
     {
         return $this->ok(Branch::where('is_active', true)->when($this->allowedBranches($request->user()), fn ($q, $ids) => $q->whereIn('id', $ids))->orderBy('name')->get(), 'Sedes obtenidas.');
     }
+
+    public function transfers(Request $request)
+    {
+        $allowed = $this->allowedBranches($request->user());
+        $items = Transfer::with(['product', 'fromBranch', 'toBranch', 'user'])
+            ->when($allowed, fn ($q) => $q->where(fn ($q) => $q->whereIn('from_branch_id', $allowed)->orWhereIn('to_branch_id', $allowed)))
+            ->when($request->status, fn ($q, $v) => $q->where('status', $v))->latest()->paginate(15);
+        return response()->json(['success' => true, 'message' => 'Transferencias obtenidas.', 'data' => $items->items(), 'meta' => ['current_page' => $items->currentPage(), 'last_page' => $items->lastPage(), 'total' => $items->total()]]);
+    }
+
+    public function storeTransfer(Request $request)
+    {
+        abort_unless($request->user()->can('inventory.manage'), 403);
+        $data = $request->validate(['product_id' => ['required', Rule::exists('products', 'id')->where('is_active', true)], 'from_branch_id' => ['required', 'different:to_branch_id', Rule::exists('branches', 'id')->where('is_active', true)], 'to_branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)], 'quantity' => 'required|integer|min:1', 'notes' => 'nullable|string|max:5000']);
+        abort_unless($request->user()->canAccessBranch((int) $data['from_branch_id']) && $request->user()->canAccessBranch((int) $data['to_branch_id']), 403, 'No tienes acceso a las sedes seleccionadas.');
+        $transfer = Transfer::create($data + ['user_id' => $request->user()->id]);
+        return $this->ok($transfer->load(['product', 'fromBranch', 'toBranch', 'user']), 'Transferencia creada.', 201);
+    }
+
+    public function completeTransfer(Request $request, Transfer $transfer)
+    {
+        abort_unless($request->user()->can('inventory.manage') && $request->user()->canAccessBranch($transfer->from_branch_id) && $request->user()->canAccessBranch($transfer->to_branch_id), 403);
+        DB::transaction(function () use ($request, $transfer) {
+            $transfer = Transfer::whereKey($transfer->id)->lockForUpdate()->firstOrFail();
+            abort_if($transfer->status !== 'pending', 422, 'La transferencia ya fue procesada.');
+            $source = Inventory::where(['product_id' => $transfer->product_id, 'branch_id' => $transfer->from_branch_id])->lockForUpdate()->first();
+            abort_unless($source && $source->quantity >= $transfer->quantity, 422, 'Stock insuficiente en la sede de origen.');
+            $destination = Inventory::firstOrCreate(['product_id' => $transfer->product_id, 'branch_id' => $transfer->to_branch_id], ['quantity' => 0]);
+            $destination = Inventory::whereKey($destination->id)->lockForUpdate()->first();
+            $sourceBefore = $source->quantity; $destinationBefore = $destination->quantity;
+            $source->update(['quantity' => $sourceBefore - $transfer->quantity]);
+            $destination->update(['quantity' => $destinationBefore + $transfer->quantity]);
+            foreach ([[$transfer->from_branch_id, 'salida', $sourceBefore, $source->quantity], [$transfer->to_branch_id, 'entrada', $destinationBefore, $destination->quantity]] as [$branch, $type, $before, $after]) InventoryMovement::create(['product_id' => $transfer->product_id, 'branch_id' => $branch, 'user_id' => $request->user()->id, 'type' => $type, 'quantity' => $transfer->quantity, 'stock_before' => $before, 'stock_after' => $after, 'movement_date' => today(), 'reason' => 'Transferencia #'.$transfer->id]);
+            $transfer->update(['status' => 'completed', 'completed_at' => now(), 'completed_by' => $request->user()->id]);
+        });
+        return $this->ok($transfer->fresh()->load(['product', 'fromBranch', 'toBranch']), 'Transferencia completada.');
+    }
+
+    public function inventoryReport(Request $request)
+    {
+        abort_unless($request->user()->can('reports.view'), 403);
+        $branch = $request->filled('branch_id') ? Branch::findOrFail($request->branch_id) : null;
+        if ($branch) abort_unless($request->user()->canAccessBranch($branch->id), 403);
+        $inventory = Inventory::with(['product.category', 'branch'])->when($branch, fn ($q) => $q->where('branch_id', $branch->id))->when(!$branch && $this->allowedBranches($request->user()), fn ($q, $ids) => $q->whereIn('branch_id', $ids))->get();
+        return $this->ok(['branch' => $branch, 'inventory' => $inventory, 'totals' => ['items' => $inventory->count(), 'units' => $inventory->sum('quantity'), 'low' => $inventory->filter(fn ($x) => $x->quantity > 0 && $x->quantity <= $x->product->minimum_stock)->count()]], 'Reporte obtenido.');
+    }
+
+    public function adminUsers() { return $this->ok(User::with('branches')->latest()->paginate(20), 'Usuarios obtenidos.'); }
+    public function adminLicenses() { return $this->ok(License::with(['branch', 'creator'])->latest()->paginate(20), 'Licencias obtenidas.'); }
+    public function storeLicense(Request $request) { $data = $request->validate(['branch_id' => 'required|exists:branches,id']); $license = License::create(['branch_id' => $data['branch_id'], 'created_by' => $request->user()->id, 'code' => strtoupper(bin2hex(random_bytes(5)))]); return $this->ok($license->load('branch'), 'Licencia creada.', 201); }
+    public function adminAudit(Request $request) { return $this->ok(AuditLog::with('user')->when($request->search, fn ($q, $v) => $q->where('action', 'like', "%{$v}%"))->latest()->paginate(20), 'Auditoría obtenida.'); }
 
     private function allowedBranches($user)
     {
