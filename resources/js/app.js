@@ -1,4 +1,5 @@
 import './bootstrap';
+import './dashboard';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import Modal from 'bootstrap/js/dist/modal';
 import Chart from 'chart.js/auto';

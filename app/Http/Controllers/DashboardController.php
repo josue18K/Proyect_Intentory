@@ -1,18 +1,7 @@
 <?php
-
 namespace App\Http\Controllers;
-
-use App\Models\{Inventory, InventoryMovement, Product};
-use Illuminate\Support\Facades\DB;
-
+use App\Models\{Branch,Inventory,InventoryMovement,Product,StockReview};
 class DashboardController extends Controller
 {
-    public function __invoke()
-    {
-        $allowed = auth()->user()->role === 'administrador' ? null : auth()->user()->branches()->pluck('branches.id');
-        $inventory = Inventory::when($allowed, fn ($q) => $q->whereIn('branch_id', $allowed));
-        $stats = ['products' => Product::where('is_active', true)->when($allowed, fn ($q) => $q->whereHas('inventories', fn ($i) => $i->whereIn('branch_id', $allowed)))->count(), 'stock' => (clone $inventory)->sum('quantity'), 'low' => (clone $inventory)->join('products', 'products.id', '=', 'inventories.product_id')->whereColumn('inventories.quantity', '<=', 'products.minimum_stock')->where('inventories.quantity', '>', 0)->count(), 'empty' => (clone $inventory)->where('quantity', 0)->count()];
-        $movements = InventoryMovement::with(['product', 'branch'])->when($allowed, fn ($q) => $q->whereIn('branch_id', $allowed))->latest()->take(8)->get();
-        return view('dashboard', compact('stats', 'movements'));
-    }
+ public function __invoke(){ $allowed=auth()->user()->role==='administrador'?null:auth()->user()->branches()->pluck('branches.id');$inventory=Inventory::when($allowed,fn($q)=>$q->whereIn('branch_id',$allowed));$stats=['products'=>Product::where('is_active',true)->when($allowed,fn($q)=>$q->whereIn('branch_id',$allowed))->count(),'stock'=>(clone $inventory)->sum('quantity'),'low'=>(clone $inventory)->join('products','products.id','=','inventories.product_id')->whereColumn('inventories.quantity','<=','products.minimum_stock')->where('inventories.quantity','>',0)->count(),'empty'=>(clone $inventory)->where('quantity',0)->count()];$movements=InventoryMovement::with(['product','branch'])->when($allowed,fn($q)=>$q->whereIn('branch_id',$allowed))->latest()->take(8)->get();$daily=InventoryMovement::when($allowed,fn($q)=>$q->whereIn('branch_id',$allowed))->whereDate('movement_date','>=',today()->subDays(6))->selectRaw('DATE(movement_date) day,type,SUM(quantity) total')->groupBy('day','type')->get();$chart=collect(range(6,0))->map(function($offset)use($daily){$date=today()->subDays($offset);return ['label'=>$date->isoFormat('ddd D'),'entrada'=>(int)optional($daily->first(fn($x)=>$x->day===$date->toDateString()&&$x->type==='entrada'))->total,'salida'=>(int)optional($daily->first(fn($x)=>$x->day===$date->toDateString()&&$x->type==='salida'))->total];});$topProducts=Product::when($allowed,fn($q)=>$q->whereIn('branch_id',$allowed))->withSum(['movements as rotation_units'=>fn($q)=>$q->where('type','salida')->whereDate('movement_date','>=',today()->subDays(30))],'quantity')->orderByDesc('rotation_units')->take(5)->get();$branches=Branch::where('is_active',true)->when($allowed,fn($q)=>$q->whereIn('id',$allowed))->get();$reviewStatus=$branches->map(function($branch){$last=StockReview::where('branch_id',$branch->id)->latest()->first();return ['branch'=>$branch,'last'=>$last,'overdue'=>!$last||$last->created_at->lt(now()->subDays(5))];});return view('dashboard',compact('stats','movements','chart','topProducts','reviewStatus'));}
 }

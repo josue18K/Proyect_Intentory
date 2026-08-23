@@ -1,19 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
-
-use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-
-class CategoryController extends Controller
-{
-    public function index() { return view('categories.index', ['items' => Category::withCount('products')->latest()->paginate(10)]); }
-    public function create() { return view('categories.form', ['item' => new Category]); }
-    public function store(Request $request) { return $this->save($request, new Category); }
-    public function edit(Category $category) { return view('categories.form', ['item' => $category]); }
-    public function update(Request $request, Category $category) { return $this->save($request, $category); }
-    public function destroy(Category $category) { $category->update(['is_active' => false]); return back()->with('success', 'Categoría desactivada.'); }
-    private function save(Request $request, Category $category) { $data = $request->validate(['name' => 'required|string|max:255', 'is_active' => 'nullable|boolean']); $data['slug'] = Str::slug($data['name']); $request->validate(['name' => [Rule::unique('categories', 'name')->ignore($category->id)], 'slug' => [Rule::unique('categories', 'slug')->ignore($category->id)]]); $data['is_active'] = $request->boolean('is_active'); $category->fill($data)->save(); return redirect()->route('categories.index')->with('success', 'Categoría guardada.'); }
-}
+use App\Models\Category;use Illuminate\Http\Request;use Illuminate\Support\Str;use Illuminate\Validation\Rule;
+class CategoryController extends Controller{public function index(){return view('categories.index',['items'=>Category::withCount('products')->latest()->paginate(10)]);}public function create(){return view('categories.form',['item'=>new Category]);}public function store(Request $r){return $this->save($r,new Category);}public function edit(Category $category){return view('categories.form',['item'=>$category]);}public function update(Request $r,Category $category){return $this->save($r,$category);}public function destroy(Category $category){$old=$category->toArray();$category->update(['is_active'=>false]);$this->audit('category.deleted',$category,$old,$category->fresh()->toArray());return back()->with('success','Categoría desactivada y conservada en el historial.');}private function save(Request $r,Category $category){$old=$category->exists?$category->toArray():null;$data=$r->validate(['name'=>['required','string','max:255',Rule::unique('categories')->ignore($category->id)],'is_active'=>'nullable|boolean']);$data['slug']=Str::slug($data['name']);$data['is_active']=$r->boolean('is_active',true);$category->fill($data)->save();$this->audit($old?'category.updated':'category.created',$category,$old,$category->fresh()->toArray());return redirect()->route('categories.index')->with('success','Categoría guardada.');}}

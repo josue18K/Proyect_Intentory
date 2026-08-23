@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController, AuditLogController, BranchController, CategoryController, DashboardController, InventoryMovementController, LicenseController, ProductController, ReportController, TransferController, UserController};
+use App\Http\Controllers\{AuthController, AuditLogController, BranchController, CategoryController, DashboardController, InventoryMovementController, LicenseController, ProductController, ReportController, StockReviewController, TransferController, UserController};
 
 Route::get('/', fn() => auth()->check() ? redirect()->route('dashboard') : app(\App\Http\Controllers\AuthController::class)->create());
 Route::middleware('guest')->group(function () {
@@ -25,6 +25,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('transfers/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfers.cancel');
     Route::middleware('role:administrador')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -34,6 +36,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/csv', [ReportController::class, 'csv'])->name('reports.csv');
+    Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+    Route::post('stock-reviews', [StockReviewController::class, 'store'])->name('stock-reviews.store');
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
     Route::get('products/{product}/history', [ProductController::class, 'history'])->name('products.history');
 });
+Route::get('reports/shared/{branch}', [ReportController::class, 'sharedPdf'])->middleware('signed')->name('reports.shared');

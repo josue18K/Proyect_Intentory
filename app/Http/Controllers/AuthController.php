@@ -24,6 +24,7 @@ class AuthController extends Controller
             return $user;
         });
         Auth::login($user);
+        $this->audit('user.registered', $user, null, $user->only('name', 'email', 'role'));
         $request->session()->regenerate();
         return redirect()->route('dashboard')->with('success', 'Cuenta creada y licencia activada.');
     }

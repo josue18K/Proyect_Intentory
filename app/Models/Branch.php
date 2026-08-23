@@ -18,4 +18,5 @@ class Branch extends Model
 
     public function inventories() { return $this->hasMany(Inventory::class); }
     public function movements() { return $this->hasMany(InventoryMovement::class); }
+    public function stockReviews() { return $this->hasMany(StockReview::class); }
 }

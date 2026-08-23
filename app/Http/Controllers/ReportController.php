@@ -1,37 +1,12 @@
 <?php
 namespace App\Http\Controllers;
-
-use App\Models\{Branch, Inventory, InventoryMovement, Product};
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-
+use App\Models\{Branch,Inventory,InventoryMovement,Product};use Barryvdh\DomPDF\Facade\Pdf;use Illuminate\Http\Request;use Illuminate\Support\Facades\URL;
 class ReportController extends Controller
 {
-    private function branchIds(Request $request)
-    {
-        return $request->user()->role === 'administrador' ? null : $request->user()->branches()->pluck('branches.id');
-    }
-
-    public function index(Request $request)
-    {
-        abort_unless($request->user()->can('reports.view'), 403);
-        $ids = $this->branchIds($request);
-        $branches = Branch::where('is_active', true)->when($ids, fn ($q) => $q->whereIn('id', $ids))->orderBy('name')->get();
-        if (! $request->filled('branch_id')) {
-            return view('reports.index', ['inventory' => collect(), 'movements' => collect(), 'products' => collect(), 'branches' => $branches]);
-        }
-        $filter = fn ($q) => $q->when($ids, fn ($q) => $q->whereIn('branch_id', $ids))->when($request->branch_id, fn ($q, $v) => $q->where('branch_id', $v));
-        $inventory = Inventory::with(['product','branch'])->where($filter)->get();
-        $movements = InventoryMovement::with(['product','branch'])->where($filter)->when($request->type, fn ($q, $v) => $q->where('type', $v))->when($request->from, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))->latest()->get();
-        $products = Product::withCount(['movements as movement_count' => fn ($q) => $q->where($filter)->when($request->type, fn ($q, $v) => $q->where('type', $v))->when($request->from, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))])->get();
-        return view('reports.index', compact('inventory', 'movements', 'branches', 'products'));
-    }
-
-    public function csv(Request $request): StreamedResponse
-    {
-        $ids = $this->branchIds($request);
-        abort_unless($request->filled('branch_id'), 422, 'Selecciona una sede para generar el reporte.');
-        $rows = InventoryMovement::with(['product','branch'])->when($ids, fn ($q) => $q->whereIn('branch_id', $ids))->when($request->branch_id, fn ($q, $v) => $q->where('branch_id', $v))->when($request->type, fn ($q, $v) => $q->where('type', $v))->when($request->from, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))->when($request->to, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))->get();
-        return response()->streamDownload(function () use ($rows) { $out = fopen('php://output', 'w'); fputcsv($out, ['Fecha','Producto','Sede','Tipo','Cantidad','Stock resultante']); foreach ($rows as $row) fputcsv($out, [$row->created_at, $row->product->name, $row->branch->name, $row->type, $row->quantity, $row->stock_after]); fclose($out); }, 'movimientos.csv', ['Content-Type' => 'text/csv']);
-    }
+ private function ids(Request $r){return $r->user()->role==='administrador'?null:$r->user()->branches()->pluck('branches.id');}
+ private function data(Request $r){$ids=$this->ids($r);$branches=Branch::where('is_active',true)->when($ids,fn($q)=>$q->whereIn('id',$ids))->orderBy('name')->get();if(!$r->filled('branch_id'))return compact('branches')+['inventory'=>collect(),'movements'=>collect(),'products'=>collect(),'selectedBranch'=>null,'shareUrl'=>null];abort_unless($branches->contains('id',(int)$r->branch_id),403);$inventory=Inventory::with(['product.category','branch'])->where('branch_id',$r->branch_id)->get();$movements=InventoryMovement::with(['product','branch'])->where('branch_id',$r->branch_id)->when($r->type,fn($q,$v)=>$q->where('type',$v))->when($r->from,fn($q,$v)=>$q->whereDate('movement_date','>=',$v))->when($r->to,fn($q,$v)=>$q->whereDate('movement_date','<=',$v))->latest()->get();$products=Product::where('branch_id',$r->branch_id)->withSum(['movements as rotation_units'=>fn($q)=>$q->where('branch_id',$r->branch_id)->where('type','salida')->when($r->from,fn($q,$v)=>$q->whereDate('movement_date','>=',$v))->when($r->to,fn($q,$v)=>$q->whereDate('movement_date','<=',$v))],'quantity')->orderByDesc('rotation_units')->get();$selectedBranch=$branches->firstWhere('id',(int)$r->branch_id);$shareUrl=URL::temporarySignedRoute('reports.shared',now()->addDays(7),['branch'=>$selectedBranch]);return compact('branches','inventory','movements','products','selectedBranch','shareUrl');}
+ public function index(Request $r){abort_unless($r->user()->can('reports.view'),403);return view('reports.index',$this->data($r));}
+ public function csv(Request $r){abort_unless($r->user()->can('reports.view'),403);$d=$this->data($r);abort_unless($d['selectedBranch'],422);return response()->streamDownload(function()use($d){$o=fopen('php://output','w');fputcsv($o,['Producto','Código','Sede','Cantidad','Precio']);foreach($d['inventory'] as $x)fputcsv($o,[$x->product->name,$x->product->internal_code,$x->branch->name,$x->quantity,$x->product->sale_price]);fclose($o);},'inventario-'.$d['selectedBranch']->slug.'.csv',['Content-Type'=>'text/csv']);}
+ public function pdf(Request $r){abort_unless($r->user()->can('reports.view'),403);$d=$this->data($r);abort_unless($d['selectedBranch'],422);return Pdf::loadView('reports.pdf',$d)->setPaper('a4')->download('inventario-'.$d['selectedBranch']->slug.'.pdf');}
+ public function sharedPdf(Request $r,Branch $branch){$inventory=Inventory::with(['product.category','branch'])->where('branch_id',$branch->id)->get();return Pdf::loadView('reports.pdf',['inventory'=>$inventory,'selectedBranch'=>$branch])->setPaper('a4')->stream('inventario-'.$branch->slug.'.pdf');}
 }
