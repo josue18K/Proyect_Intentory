@@ -20,6 +20,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::resource('products', ProductController::class)->except(['show', 'index']);
     });
     Route::resource('movements', InventoryMovementController::class)->only(['index', 'create', 'store']);
+    // Kept for existing integrations; transfers are intentionally not exposed in the UI.
     Route::resource('transfers', TransferController::class)->only(['index', 'create', 'store']);
     Route::post('transfers/{transfer}/complete', [TransferController::class, 'complete'])->name('transfers.complete');
     Route::post('transfers/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfers.cancel');

@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => 'Movimientos', 'heading' => 'Historial de movimientos'])
+@extends('layouts.app', ['title' => 'Control de stock', 'heading' => 'Control de stock'])
 @section('content')
 @include('partials.flash')
 <div class="d-flex justify-content-between mb-3"><form class="row g-2"><div class="col-auto"><input name="search" class="form-control" placeholder="Producto o código" value="{{ request('search') }}"></div><div class="col-auto"><select name="branch_id" class="form-select"><option value="">Todas las sedes</option>@foreach($branches as $branch)<option value="{{ $branch->id }}" @selected(request('branch_id')==$branch->id)>{{ $branch->name }}</option>@endforeach</select></div><div class="col-auto"><select name="type" class="form-select"><option value="">Todos</option><option value="entrada" @selected(request('type')==='entrada')>Entradas</option><option value="salida" @selected(request('type')==='salida')>Salidas</option></select></div><button class="btn btn-outline-dark">Filtrar</button></form><a class="btn btn-dark" href="{{ route('movements.create') }}">+ Registrar movimiento</a></div>

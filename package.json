@@ -17,5 +17,23 @@
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.1",
         "lucide": "^0.468.0"
-    }
+    },
+    "name": "sis_inventory",
+    "version": "1.0.0",
+    "description": "<p align=\"center\"><a href=\"https://laravel.com\" target=\"_blank\"><img src=\"https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg\" width=\"400\" alt=\"Laravel Logo\"></a></p>",
+    "main": "vite.config.js",
+    "directories": {
+        "test": "tests"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/josue18K/Proyect_Intentory.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/josue18K/Proyect_Intentory/issues"
+    },
+    "homepage": "https://github.com/josue18K/Proyect_Intentory#readme"
 }

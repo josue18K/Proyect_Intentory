@@ -111,8 +111,16 @@ class InventoryController extends Controller
     public function storeTransfer(Request $request)
     {
         abort_unless($request->user()->can('inventory.manage'), 403);
+        if ($request->filled('product_id')) {
+            $productId = Product::whereKey($request->input('product_id'))
+                ->orWhere('barcode', $request->input('product_id'))
+                ->orWhere('internal_code', $request->input('product_id'))
+                ->value('id');
+            $request->merge(['product_id' => $productId ?? $request->input('product_id')]);
+        }
         $data = $request->validate(['product_id' => ['required', Rule::exists('products', 'id')->where('is_active', true)], 'from_branch_id' => ['required', 'different:to_branch_id', Rule::exists('branches', 'id')->where('is_active', true)], 'to_branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)], 'quantity' => 'required|integer|min:1', 'notes' => 'nullable|string|max:5000']);
         abort_unless($request->user()->canAccessBranch((int) $data['from_branch_id']) && $request->user()->canAccessBranch((int) $data['to_branch_id']), 403, 'No tienes acceso a las sedes seleccionadas.');
+        abort_unless(Inventory::where(['product_id' => $data['product_id'], 'branch_id' => $data['from_branch_id']])->exists(), 422, 'El producto no tiene inventario en la sede de origen.');
         $transfer = Transfer::create($data + ['user_id' => $request->user()->id]);
         return $this->ok($transfer->load(['product', 'fromBranch', 'toBranch', 'user']), 'Transferencia creada.', 201);
     }
@@ -129,6 +137,7 @@ class InventoryController extends Controller
             $destination = Inventory::whereKey($destination->id)->lockForUpdate()->first();
             $sourceBefore = $source->quantity; $destinationBefore = $destination->quantity;
             $source->update(['quantity' => $sourceBefore - $transfer->quantity]);
+            abort_if($destinationBefore + $transfer->quantity > 2147483647, 422, 'La cantidad resultante supera el límite permitido.');
             $destination->update(['quantity' => $destinationBefore + $transfer->quantity]);
             foreach ([[$transfer->from_branch_id, 'salida', $sourceBefore, $source->quantity], [$transfer->to_branch_id, 'entrada', $destinationBefore, $destination->quantity]] as [$branch, $type, $before, $after]) InventoryMovement::create(['product_id' => $transfer->product_id, 'branch_id' => $branch, 'user_id' => $request->user()->id, 'type' => $type, 'quantity' => $transfer->quantity, 'stock_before' => $before, 'stock_after' => $after, 'movement_date' => today(), 'reason' => 'Transferencia #'.$transfer->id]);
             $transfer->update(['status' => 'completed', 'completed_at' => now(), 'completed_by' => $request->user()->id]);
@@ -139,6 +148,7 @@ class InventoryController extends Controller
     public function inventoryReport(Request $request)
     {
         abort_unless($request->user()->can('reports.view'), 403);
+        $request->validate(['branch_id' => ['nullable', 'integer', Rule::exists('branches', 'id')->where('is_active', true)]]);
         $branch = $request->filled('branch_id') ? Branch::findOrFail($request->branch_id) : null;
         if ($branch) abort_unless($request->user()->canAccessBranch($branch->id), 403);
         $inventory = Inventory::with(['product.category', 'branch'])->when($branch, fn ($q) => $q->where('branch_id', $branch->id))->when(!$branch && $this->allowedBranches($request->user()), fn ($q, $ids) => $q->whereIn('branch_id', $ids))->get();
@@ -147,7 +157,7 @@ class InventoryController extends Controller
 
     public function adminUsers() { return $this->ok(User::with('branches')->latest()->paginate(20), 'Usuarios obtenidos.'); }
     public function adminLicenses() { return $this->ok(License::with(['branch', 'creator'])->latest()->paginate(20), 'Licencias obtenidas.'); }
-    public function storeLicense(Request $request) { $data = $request->validate(['branch_id' => 'required|exists:branches,id']); $license = License::create(['branch_id' => $data['branch_id'], 'created_by' => $request->user()->id, 'code' => strtoupper(bin2hex(random_bytes(5)))]); return $this->ok($license->load('branch'), 'Licencia creada.', 201); }
+    public function storeLicense(Request $request) { $data = $request->validate(['branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)]]); $license = License::create(['branch_id' => $data['branch_id'], 'created_by' => $request->user()->id, 'code' => strtoupper(bin2hex(random_bytes(5)))]); return $this->ok($license->load('branch'), 'Licencia creada.', 201); }
     public function adminAudit(Request $request) { return $this->ok(AuditLog::with('user')->when($request->search, fn ($q, $v) => $q->where('action', 'like', "%{$v}%"))->latest()->paginate(20), 'Auditoría obtenida.'); }
 
     private function allowedBranches($user)

@@ -216,7 +216,9 @@ CATALOG;
         foreach (explode("\n", trim($catalog)) as $index => $line) {
             [$categoryName, $name, $salePrice, $initialStock] = explode('|', $line);
             $category = $categories[$categoryName] ??= Category::create(['name' => $categoryName, 'slug' => str($categoryName)->slug()]);
+            $branch = $mujerCategories->contains($categoryName) ? $mujer : $pauza;
             $product = Product::create([
+                'branch_id' => $branch->id,
                 'category_id' => $category->id,
                 'internal_code' => 'LIU-' . str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT),
                 'name' => $name,
@@ -224,7 +226,6 @@ CATALOG;
                 'sale_price' => (float) $salePrice,
                 'minimum_stock' => $initialStock > 0 ? max(3, (int) ceil($initialStock * .15)) : 3,
             ]);
-            $branch = $mujerCategories->contains($categoryName) ? $mujer : $pauza;
             $quantity = (int) $initialStock;
             Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => $quantity]);
             if ($quantity > 0) {
@@ -476,8 +477,8 @@ CATALOG;
         foreach (explode("\n", trim($additionalCatalog)) as $line) {
             [$categoryName, $name, $salePrice] = explode('|', $line);
             $category = $categories[$categoryName] ??= Category::create(['name' => $categoryName, 'slug' => str($categoryName)->slug()]);
-            $product = Product::create(['category_id' => $category->id, 'internal_code' => 'LIU-' . str_pad((string) (++$code), 4, '0', STR_PAD_LEFT), 'name' => $name, 'purchase_price' => 0, 'sale_price' => (float) $salePrice, 'minimum_stock' => 3]);
             $branch = $mujerCategories->contains($categoryName) ? $mujer : $pauza;
+            $product = Product::create(['branch_id' => $branch->id, 'category_id' => $category->id, 'internal_code' => 'LIU-' . str_pad((string) (++$code), 4, '0', STR_PAD_LEFT), 'name' => $name, 'purchase_price' => 0, 'sale_price' => (float) $salePrice, 'minimum_stock' => 3]);
             Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 0]);
         }
     }
