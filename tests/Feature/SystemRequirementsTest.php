@@ -41,4 +41,20 @@ class SystemRequirementsTest extends TestCase
         $this->assertDatabaseHas('stock_reviews', ['branch_id' => $branch->id, 'low_stock_count' => 1]);
         $this->get(route('reports.pdf', ['branch_id' => $branch->id]))->assertOk()->assertHeader('content-type', 'application/pdf');
     }
+
+    public function test_stock_control_searches_products_by_barcode_without_old_filters(): void
+    {
+        $admin = User::factory()->create(['role' => 'administrador']);
+        $branch = Branch::create(['name' => 'Principal', 'slug' => 'principal']);
+        $category = Category::create(['name' => 'General', 'slug' => 'general']);
+        $product = Product::create(['branch_id' => $branch->id, 'category_id' => $category->id, 'internal_code' => 'BUS-01', 'barcode' => '7750001234567', 'name' => 'Producto buscable', 'sale_price' => 5, 'minimum_stock' => 1]);
+        Inventory::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 2]);
+        InventoryMovement::create(['product_id' => $product->id, 'branch_id' => $branch->id, 'user_id' => $admin->id, 'type' => 'entrada', 'quantity' => 2, 'stock_before' => 0, 'stock_after' => 2, 'movement_date' => today()]);
+
+        $this->actingAs($admin)->get(route('movements.index', ['search' => '7750001234567']))
+            ->assertOk()
+            ->assertSee('Producto buscable')
+            ->assertSee('Buscar producto')
+            ->assertDontSee('Todas las sedes');
+    }
 }
