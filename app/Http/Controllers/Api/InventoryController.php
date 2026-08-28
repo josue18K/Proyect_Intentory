@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\{AuditLog, Branch, Inventory, InventoryMovement, Product, Transfer, User, License};
+use App\Models\{AuditLog, Branch, Category, Inventory, InventoryMovement, Product, Transfer, User, License};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class InventoryController extends Controller
 {
@@ -22,6 +24,81 @@ class InventoryController extends Controller
             ->orderBy('name')->get();
 
         return $this->ok($items, 'Productos obtenidos.');
+    }
+
+    public function categories()
+    {
+        return $this->ok(Category::where('is_active', true)->orderBy('name')->get(), 'Categorías obtenidas.');
+    }
+
+    public function storeCategory(Request $request)
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:255', 'unique:categories,name']]);
+        $category = Category::create(['name' => $data['name'], 'slug' => Str::slug($data['name']), 'is_active' => true]);
+        $this->auditApi($request, 'category.created', $category);
+        return $this->ok($category, 'Categoría creada.', 201);
+    }
+
+    public function updateCategory(Request $request, Category $category)
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($category->id)], 'is_active' => 'boolean']);
+        $old = $category->toArray();
+        $category->update(['name' => $data['name'], 'slug' => Str::slug($data['name']), 'is_active' => $data['is_active'] ?? true]);
+        $this->auditApi($request, 'category.updated', $category, $old);
+        return $this->ok($category->fresh(), 'Categoría actualizada.');
+    }
+
+    public function deleteCategory(Request $request, Category $category)
+    {
+        $category->update(['is_active' => false]);
+        $this->auditApi($request, 'category.deleted', $category);
+        return $this->ok(null, 'Categoría desactivada.');
+    }
+
+    public function storeProduct(Request $request)
+    {
+        $data = $request->validate(['branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)], 'category_id' => ['required', Rule::exists('categories', 'id')->where('is_active', true)], 'internal_code' => ['nullable','max:255',Rule::unique('products')->where(fn($q)=>$q->where('branch_id',$request->branch_id))], 'barcode' => ['nullable','max:255',Rule::unique('products')->where(fn($q)=>$q->where('branch_id',$request->branch_id))], 'name' => 'required|string|max:255', 'sale_price' => 'required|numeric|min:0', 'minimum_stock' => 'required|integer|min:0', 'initial_quantity' => 'required|integer|min:0']);
+        if (blank($data['internal_code'] ?? null)) {
+            $prefix = strtoupper(substr(Branch::findOrFail($data['branch_id'])->slug, 0, 4));
+            $next = Product::where('branch_id', $data['branch_id'])->count() + 1;
+            do { $data['internal_code'] = $prefix.'-'.str_pad((string) $next++, 5, '0', STR_PAD_LEFT); }
+            while (Product::where('branch_id', $data['branch_id'])->where('internal_code', $data['internal_code'])->exists());
+        }
+        $product = DB::transaction(function () use ($data, $request) {
+            $product = Product::create($data + ['purchase_price' => 0, 'is_active' => true]);
+            Inventory::create(['product_id' => $product->id, 'branch_id' => $data['branch_id'], 'quantity' => $data['initial_quantity']]);
+            if ($data['initial_quantity'] > 0) InventoryMovement::create(['product_id' => $product->id, 'branch_id' => $data['branch_id'], 'user_id' => $request->user()->id, 'type' => 'entrada', 'quantity' => $data['initial_quantity'], 'stock_before' => 0, 'stock_after' => $data['initial_quantity'], 'movement_date' => today(), 'reason' => 'Carga inicial']);
+            return $product;
+        });
+        $this->auditApi($request, 'product.created', $product);
+        return $this->ok($product->load(['category', 'inventories']), 'Producto creado.', 201);
+    }
+
+    public function updateProduct(Request $request, Product $product)
+    {
+        $data = $request->validate(['category_id' => ['required', Rule::exists('categories', 'id')->where('is_active', true)], 'internal_code' => ['nullable','max:255',Rule::unique('products')->where(fn($q)=>$q->where('branch_id',$product->branch_id))->ignore($product->id)], 'barcode' => ['nullable','max:255',Rule::unique('products')->where(fn($q)=>$q->where('branch_id',$product->branch_id))->ignore($product->id)], 'name' => 'required|string|max:255', 'sale_price' => 'required|numeric|min:0', 'minimum_stock' => 'required|integer|min:0', 'current_quantity' => 'required|integer|min:0|max:2147483647']);
+        $old = $product->toArray();
+        DB::transaction(function () use ($data, $product, $request) {
+            $product->update(collect($data)->except('current_quantity')->all());
+            $inventory = Inventory::where('product_id', $product->id)->firstOrFail();
+            $before = (int) $inventory->quantity;
+            $after = (int) $data['current_quantity'];
+            if ($before !== $after) {
+                $type = $after > $before ? 'entrada' : 'salida';
+                $quantity = abs($after - $before);
+                $inventory->update(['quantity' => $after, 'last_entry_at' => $type === 'entrada' ? now() : $inventory->last_entry_at, 'exhausted_at' => $after === 0 ? now() : null]);
+                InventoryMovement::create(['product_id' => $product->id, 'branch_id' => $inventory->branch_id, 'user_id' => $request->user()->id, 'type' => $type, 'quantity' => $quantity, 'stock_before' => $before, 'stock_after' => $after, 'movement_date' => today(), 'reason' => 'Ajuste desde aplicación']);
+            }
+        });
+        $this->auditApi($request, 'product.updated', $product, $old);
+        return $this->ok($product->fresh()->load(['category', 'inventories']), 'Producto actualizado.');
+    }
+
+    public function deleteProduct(Request $request, Product $product)
+    {
+        $product->update(['is_active' => false]);
+        $this->auditApi($request, 'product.deleted', $product);
+        return $this->ok(null, 'Producto desactivado.');
     }
 
     public function dashboard(Request $request)
@@ -52,6 +129,21 @@ class InventoryController extends Controller
             ->latest('movement_date')->latest()->paginate(15);
 
         return response()->json(['success' => true, 'message' => 'Movimientos obtenidos.', 'data' => $paginator->items(), 'meta' => ['current_page' => $paginator->currentPage(), 'last_page' => $paginator->lastPage(), 'per_page' => $paginator->perPage(), 'total' => $paginator->total()]]);
+    }
+
+    public function productHistory(Request $request, Product $product)
+    {
+        $allowed = $this->allowedBranches($request->user());
+        return $this->ok($product->movements()->with(['branch', 'user'])->when($allowed, fn ($q) => $q->whereIn('branch_id', $allowed))->latest('movement_date')->latest()->get(), 'Historial obtenido.');
+    }
+
+    public function stockReview(Request $request)
+    {
+        $data = $request->validate(['branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)], 'notes' => 'nullable|string|max:1000']);
+        abort_unless($request->user()->canAccessBranch((int) $data['branch_id']), 403);
+        $base = Inventory::where('branch_id', $data['branch_id'])->with('product')->get();
+        $review = \App\Models\StockReview::create(['branch_id' => $data['branch_id'], 'user_id' => $request->user()->id, 'low_stock_count' => $base->filter(fn ($i) => $i->quantity > 0 && $i->quantity <= $i->product->minimum_stock)->count(), 'empty_stock_count' => $base->where('quantity', 0)->count(), 'notes' => $data['notes'] ?? null]);
+        return $this->ok($review, 'Revisión registrada.', 201);
     }
 
     public function storeMovement(Request $request)
@@ -97,6 +189,31 @@ class InventoryController extends Controller
     public function branches(Request $request)
     {
         return $this->ok(Branch::where('is_active', true)->when($this->allowedBranches($request->user()), fn ($q, $ids) => $q->whereIn('id', $ids))->orderBy('name')->get(), 'Sedes obtenidas.');
+    }
+
+    public function storeBranch(Request $request)
+    {
+        $data = $request->validate(['name' => 'required|string|max:255|unique:branches,name']);
+        $branch = Branch::create(['name' => $data['name'], 'slug' => Str::slug($data['name']), 'is_active' => true]);
+        $this->auditApi($request, 'branch.created', $branch);
+        return $this->ok($branch, 'Sede creada.', 201);
+    }
+
+    public function updateBranch(Request $request, Branch $branch)
+    {
+        $data = $request->validate(['name' => ['required','string','max:255',Rule::unique('branches','name')->ignore($branch->id)]]);
+        $old = $branch->toArray();
+        $branch->update(['name' => $data['name'], 'slug' => Str::slug($data['name'])]);
+        $this->auditApi($request, 'branch.updated', $branch, $old);
+        return $this->ok($branch->fresh(), 'Sede actualizada.');
+    }
+
+    public function deleteBranch(Request $request, Branch $branch)
+    {
+        $old = $branch->toArray();
+        $branch->update(['is_active' => false]);
+        $this->auditApi($request, 'branch.deleted', $branch, $old);
+        return $this->ok(null, 'Sede desactivada.');
     }
 
     public function transfers(Request $request)
@@ -148,14 +265,19 @@ class InventoryController extends Controller
     public function inventoryReport(Request $request)
     {
         abort_unless($request->user()->can('reports.view'), 403);
-        $request->validate(['branch_id' => ['nullable', 'integer', Rule::exists('branches', 'id')->where('is_active', true)]]);
+        $request->validate(['branch_id' => ['nullable', 'integer', Rule::exists('branches', 'id')->where('is_active', true)], 'product_ids' => 'nullable|string']);
         $branch = $request->filled('branch_id') ? Branch::findOrFail($request->branch_id) : null;
         if ($branch) abort_unless($request->user()->canAccessBranch($branch->id), 403);
-        $inventory = Inventory::with(['product.category', 'branch'])->when($branch, fn ($q) => $q->where('branch_id', $branch->id))->when(!$branch && $this->allowedBranches($request->user()), fn ($q, $ids) => $q->whereIn('branch_id', $ids))->get();
+        $productIds = collect(explode(',', (string) $request->input('product_ids')))->filter()->map(fn ($id) => (int) $id)->all();
+        $inventory = Inventory::with(['product.category', 'branch'])->when($branch, fn ($q) => $q->where('branch_id', $branch->id))->when(!$branch && $this->allowedBranches($request->user()), fn ($q, $ids) => $q->whereIn('branch_id', $ids))->when($productIds, fn ($q) => $q->whereIn('product_id', $productIds))->get();
         return $this->ok(['branch' => $branch, 'inventory' => $inventory, 'totals' => ['items' => $inventory->count(), 'units' => $inventory->sum('quantity'), 'low' => $inventory->filter(fn ($x) => $x->quantity > 0 && $x->quantity <= $x->product->minimum_stock)->count()]], 'Reporte obtenido.');
     }
 
     public function adminUsers() { return $this->ok(User::with('branches')->latest()->paginate(20), 'Usuarios obtenidos.'); }
+    public function storeUser(Request $request) { $data = $request->validate(['name' => 'required|string|max:255', 'email' => 'required|email|unique:users,email', 'password' => 'required|string|min:8', 'role' => 'required|in:administrador,vendedor', 'branch_id' => 'nullable|exists:branches,id']); $user = User::create(['name' => $data['name'], 'email' => $data['email'], 'password' => Hash::make($data['password']), 'role' => $data['role'], 'permissions' => $data['role'] === 'administrador' ? [] : ['inventory.view', 'inventory.manage', 'reports.view']]); if ($data['role'] === 'vendedor' && !empty($data['branch_id'])) $user->branches()->sync([$data['branch_id']]); return $this->ok($user->load('branches'), 'Usuario creado.', 201); }
+    public function updateUser(Request $request, User $user) { $data = $request->validate(['name' => 'sometimes|required|string|max:255', 'email' => ['sometimes','required','email',Rule::unique('users','email')->ignore($user->id)], 'role' => 'required|in:administrador,vendedor', 'permissions' => 'array', 'permissions.*' => 'in:inventory.view,inventory.manage,reports.view', 'branch_id' => 'nullable|exists:branches,id']); $old=$user->toArray(); $user->update(['name'=>$data['name']??$user->name,'email'=>$data['email']??$user->email,'role' => $data['role'], 'permissions' => $data['role'] === 'administrador' ? [] : ($data['permissions'] ?? [])]); $user->branches()->sync($data['role'] === 'administrador' ? [] : (empty($data['branch_id']) ? [] : [$data['branch_id']])); $this->auditApi($request,'user.updated',$user,$old); return $this->ok($user->fresh()->load('branches'), 'Usuario actualizado.'); }
+    public function toggleUser(Request $request, User $user) { abort_if($user->is($request->user()), 422, 'No puedes desactivar tu propio usuario.'); $user->update(['is_active' => !$user->is_active]); return $this->ok($user->fresh(), 'Estado actualizado.'); }
+    public function deleteUser(Request $request, User $user) { abort_if($user->is($request->user()),422,'No puedes eliminar tu propio usuario.'); $data=$request->validate(['current_password'=>'required|string']); abort_unless(Hash::check($data['current_password'],$request->user()->password),422,'La contraseña de administrador es incorrecta.'); $old=$user->toArray(); $this->auditApi($request,'user.deleted',$user,$old); $user->delete(); return $this->ok(null,'Usuario eliminado.'); }
     public function adminLicenses() { return $this->ok(License::with(['branch', 'creator'])->latest()->paginate(20), 'Licencias obtenidas.'); }
     public function storeLicense(Request $request) { $data = $request->validate(['branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)]]); $license = License::create(['branch_id' => $data['branch_id'], 'created_by' => $request->user()->id, 'code' => strtoupper(bin2hex(random_bytes(5)))]); return $this->ok($license->load('branch'), 'Licencia creada.', 201); }
     public function adminAudit(Request $request) { return $this->ok(AuditLog::with('user')->when($request->search, fn ($q, $v) => $q->where('action', 'like', "%{$v}%"))->latest()->paginate(20), 'Auditoría obtenida.'); }
@@ -168,5 +290,10 @@ class InventoryController extends Controller
     private function ok($data, string $message, int $status = 200)
     {
         return response()->json(['success' => true, 'message' => $message, 'data' => $data], $status);
+    }
+
+    private function auditApi(Request $request, string $action, $model, ?array $old = null): void
+    {
+        AuditLog::create(['user_id'=>$request->user()->id,'action'=>$action,'auditable_type'=>$model::class,'auditable_id'=>$model->id,'old_values'=>$old,'new_values'=>$model->fresh()?->toArray()]);
     }
 }
