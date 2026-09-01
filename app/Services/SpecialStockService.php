@@ -53,7 +53,23 @@ class SpecialStockService
             'remainder' => $remainder,
             'approx_dozens' => round($quantity / 12, 2),
             'dozen_label' => $this->dozenLabel($quantity),
+            'whatsapp_label' => $this->whatsappLabel($quantity),
         ];
+    }
+
+    private function whatsappLabel(int $quantity): string
+    {
+        $roundedDozens = (int) round($quantity / 12);
+        $fullDozens = intdiv($quantity, 12);
+        $dozenWord = $fullDozens === 1 ? 'docena' : 'docenas';
+
+        return sprintf(
+            '%d ≈ %d %s aprox (%duni)',
+            $roundedDozens,
+            $fullDozens,
+            $dozenWord,
+            $quantity,
+        );
     }
 
     private function dozenLabel(int $quantity): string
@@ -72,10 +88,9 @@ class SpecialStockService
     private function message(string $title, Collection $products): string
     {
         $lines = $products->map(fn (array $product) => sprintf(
-            '• %s: %d unidades · %s',
+            '• %s: %s',
             $product['name'],
-            $product['quantity'],
-            $product['dozen_label'],
+            $product['whatsapp_label'],
         ));
 
         return "*".mb_strtoupper($title)."*\nActualizado: ".now()->format('d/m/Y H:i')."\n\n".$lines->implode("\n");
