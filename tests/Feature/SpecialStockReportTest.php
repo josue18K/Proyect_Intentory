@@ -41,12 +41,8 @@ class SpecialStockReportTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.0.key', 'chemicals')
             ->assertJsonPath('data.0.products.0.quantity', 17)
-            ->assertJsonPath('data.0.products.0.full_dozens', 1)
-            ->assertJsonPath('data.0.products.0.remainder', 5)
-            ->assertJsonPath('data.0.products.0.approx_dozens', 1.42)
-            ->assertJsonPath('data.0.products.0.whatsapp_label', '1 ≈ 1 docena aprox (17uni)')
-            ->assertJsonPath('data.0.message', fn ($message) => str_contains($message, 'Limpiatodo 1Lt: 1 ≈ 1 docena aprox (17uni)'))
-            ->assertJsonPath('data.0.message', fn ($message) => str_contains($message, 'Ácido 1Lt: 3 ≈ 2 docenas aprox (31uni)'))
-            ->assertJsonFragment(['dozen_label' => '1 docena + 5 unidades (≈ 1.42 docenas)']);
+            ->assertJsonPath('data.0.message', fn ($message) => str_contains($message, 'Limpiatodo 1Lt: 17 unidades'))
+            ->assertJsonPath('data.0.message', fn ($message) => str_contains($message, 'Ácido 1Lt: 31 unidades'))
+            ->assertJsonMissing(['dozen_label' => '1 docena + 5 unidades (≈ 1.42 docenas)']);
     }
 }

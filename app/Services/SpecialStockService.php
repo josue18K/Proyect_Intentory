@@ -41,56 +41,22 @@ class SpecialStockService
     private function productData(Product $product): array
     {
         $quantity = (int) ($product->stock ?? 0);
-        $fullDozens = intdiv($quantity, 12);
-        $remainder = $quantity % 12;
 
         return [
             'id' => $product->id,
             'name' => $product->name,
             'internal_code' => $product->internal_code,
             'quantity' => $quantity,
-            'full_dozens' => $fullDozens,
-            'remainder' => $remainder,
-            'approx_dozens' => round($quantity / 12, 2),
-            'dozen_label' => $this->dozenLabel($quantity),
-            'whatsapp_label' => $this->whatsappLabel($quantity),
         ];
-    }
-
-    private function whatsappLabel(int $quantity): string
-    {
-        $roundedDozens = (int) round($quantity / 12);
-        $fullDozens = intdiv($quantity, 12);
-        $dozenWord = $fullDozens === 1 ? 'docena' : 'docenas';
-
-        return sprintf(
-            '%d ≈ %d %s aprox (%duni)',
-            $roundedDozens,
-            $fullDozens,
-            $dozenWord,
-            $quantity,
-        );
-    }
-
-    private function dozenLabel(int $quantity): string
-    {
-        if ($quantity === 0) return '0 docenas';
-
-        $full = intdiv($quantity, 12);
-        $remainder = $quantity % 12;
-        $parts = [];
-        if ($full > 0) $parts[] = $full.' '.($full === 1 ? 'docena' : 'docenas');
-        if ($remainder > 0) $parts[] = $remainder.' '.($remainder === 1 ? 'unidad' : 'unidades');
-
-        return implode(' + ', $parts).' (≈ '.number_format($quantity / 12, 2).' docenas)';
     }
 
     private function message(string $title, Collection $products): string
     {
         $lines = $products->map(fn (array $product) => sprintf(
-            '• %s: %s',
+            '• %s: %d %s',
             $product['name'],
-            $product['whatsapp_label'],
+            $product['quantity'],
+            $product['quantity'] === 1 ? 'unidad' : 'unidades',
         ));
 
         return "*".mb_strtoupper($title)."*\nActualizado: ".now()->format('d/m/Y H:i')."\n\n".$lines->implode("\n");
