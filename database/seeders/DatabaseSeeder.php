@@ -233,6 +233,9 @@ CATALOG;
             }
         }
 
+        Product::whereIn('internal_code', config('special_stock.chemicals'))->update(['report_group' => 'chemicals']);
+        Product::whereIn('internal_code', config('special_stock.quick_purchases'))->update(['report_group' => 'quick_purchases']);
+
         $additionalCatalog = <<<'CATALOG'
 Cuidado de la piel|COLONIA + CREMA CORPORAL 250ML|17.99
 Cuidado de la piel|CREMA HIDRATANTE WOKALI|17.90

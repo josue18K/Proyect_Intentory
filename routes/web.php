@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SpecialStockController;
 use App\Http\Controllers\{AuthController, AuditLogController, BranchController, CategoryController, DashboardController, InventoryMovementController, LicenseController, ProductController, ReportController, StockReviewController, TransferController, UserController};
 
 Route::get('/', fn() => auth()->check() ? redirect()->route('dashboard') : app(\App\Http\Controllers\AuthController::class)->create());
@@ -36,6 +37,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
     });
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('stock-lists', SpecialStockController::class)->name('stock-lists.index');
     Route::get('reports/csv', [ReportController::class, 'csv'])->name('reports.csv');
     Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
     Route::post('stock-reviews', [StockReviewController::class, 'store'])->name('stock-reviews.store');

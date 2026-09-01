@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Services\SpecialStockService;
 
 class InventoryController extends Controller
 {
@@ -273,6 +274,16 @@ class InventoryController extends Controller
         return $this->ok(['branch' => $branch, 'inventory' => $inventory, 'totals' => ['items' => $inventory->count(), 'units' => $inventory->sum('quantity'), 'low' => $inventory->filter(fn ($x) => $x->quantity > 0 && $x->quantity <= $x->product->minimum_stock)->count()]], 'Reporte obtenido.');
     }
 
+    public function specialStockReport(Request $request, SpecialStockService $service)
+    {
+        abort_unless($request->user()->can('reports.view'), 403);
+        $request->validate(['branch_id' => ['nullable', 'integer', Rule::exists('branches', 'id')->where('is_active', true)]]);
+        $branchId = $request->integer('branch_id') ?: null;
+        if ($branchId) abort_unless($request->user()->canAccessBranch($branchId), 403);
+
+        return $this->ok($service->groups($request->user(), $branchId), 'Listas especiales obtenidas.');
+    }
+
     public function adminUsers() { return $this->ok(User::with('branches')->latest()->paginate(20), 'Usuarios obtenidos.'); }
     public function storeUser(Request $request) { $data = $request->validate(['name' => 'required|string|max:255', 'email' => 'required|email|unique:users,email', 'password' => 'required|string|min:8', 'role' => 'required|in:administrador,vendedor', 'branch_id' => 'nullable|exists:branches,id']); $user = User::create(['name' => $data['name'], 'email' => $data['email'], 'password' => Hash::make($data['password']), 'role' => $data['role'], 'permissions' => $data['role'] === 'administrador' ? [] : ['inventory.view', 'inventory.manage', 'reports.view']]); if ($data['role'] === 'vendedor' && !empty($data['branch_id'])) $user->branches()->sync([$data['branch_id']]); return $this->ok($user->load('branches'), 'Usuario creado.', 201); }
     public function updateUser(Request $request, User $user) { $data = $request->validate(['name' => 'sometimes|required|string|max:255', 'email' => ['sometimes','required','email',Rule::unique('users','email')->ignore($user->id)], 'role' => 'required|in:administrador,vendedor', 'permissions' => 'array', 'permissions.*' => 'in:inventory.view,inventory.manage,reports.view', 'branch_id' => 'nullable|exists:branches,id']); $old=$user->toArray(); $user->update(['name'=>$data['name']??$user->name,'email'=>$data['email']??$user->email,'role' => $data['role'], 'permissions' => $data['role'] === 'administrador' ? [] : ($data['permissions'] ?? [])]); $user->branches()->sync($data['role'] === 'administrador' ? [] : (empty($data['branch_id']) ? [] : [$data['branch_id']])); $this->auditApi($request,'user.updated',$user,$old); return $this->ok($user->fresh()->load('branches'), 'Usuario actualizado.'); }
@@ -280,7 +291,7 @@ class InventoryController extends Controller
     public function deleteUser(Request $request, User $user) { abort_if($user->is($request->user()),422,'No puedes eliminar tu propio usuario.'); $data=$request->validate(['current_password'=>'required|string']); abort_unless(Hash::check($data['current_password'],$request->user()->password),422,'La contraseña de administrador es incorrecta.'); $old=$user->toArray(); $this->auditApi($request,'user.deleted',$user,$old); $user->delete(); return $this->ok(null,'Usuario eliminado.'); }
     public function adminLicenses() { return $this->ok(License::with(['branch', 'creator'])->latest()->paginate(20), 'Licencias obtenidas.'); }
     public function storeLicense(Request $request) { $data = $request->validate(['branch_id' => ['required', Rule::exists('branches', 'id')->where('is_active', true)]]); $license = License::create(['branch_id' => $data['branch_id'], 'created_by' => $request->user()->id, 'code' => strtoupper(bin2hex(random_bytes(5)))]); return $this->ok($license->load('branch'), 'Licencia creada.', 201); }
-    public function adminAudit(Request $request) { return $this->ok(AuditLog::with('user')->when($request->search, fn ($q, $v) => $q->where('action', 'like', "%{$v}%"))->latest()->paginate(20), 'Auditoría obtenida.'); }
+    public function adminAudit(Request $request) { $items=AuditLog::with('user')->when($request->search, fn ($q, $v) => $q->where('action', 'like', "%{$v}%"))->latest()->paginate(20);$items->getCollection()->transform(function($item){$item->setAttribute('action_label',$item->actionLabel());$item->setAttribute('subject_label',$item->subjectLabel());$item->setAttribute('changes',$item->readableChanges());return $item;});return $this->ok($items, 'Auditoría obtenida.'); }
 
     private function allowedBranches($user)
     {

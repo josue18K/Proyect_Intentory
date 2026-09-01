@@ -24,6 +24,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/movements', [InventoryController::class, 'storeMovement']);
     Route::get('/branches', [InventoryController::class, 'branches']);
     Route::get('/reports/inventory', [InventoryController::class, 'inventoryReport']);
+    Route::get('/reports/special-stock', [InventoryController::class, 'specialStockReport']);
     Route::middleware('role:administrador')->group(function () {
         Route::post('/branches', [InventoryController::class, 'storeBranch']);
         Route::put('/branches/{branch}', [InventoryController::class, 'updateBranch']);
